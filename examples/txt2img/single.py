@@ -1,7 +1,7 @@
 import os
 import sys
 from typing import Literal, Dict, Optional
-
+import time
 import fire
 
 
@@ -14,14 +14,14 @@ CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 def main(
     output: str = os.path.join(CURRENT_DIR, "..", "..", "images", "outputs", "output.png"),
-    model_id_or_path: str = "KBlueLeaf/kohaku-v2.1",
+    model_id_or_path: str ="KBlueLeaf/kohaku-v2.1", #"mirroring/pastel-mix", #"black-forest-labs/FLUX.1-dev",
     lora_dict: Optional[Dict[str, float]] = None,
     prompt: str = "1girl with brown dog hair, thick glasses, smiling",
-    width: int = 512,
-    height: int = 512,
+    width: int = 1024,
+    height: int = 1024,
     acceleration: Literal["none", "xformers", "tensorrt"] = "xformers",
     use_denoising_batch: bool = False,
-    seed: int = 2,
+    seed: int = int(time.time()),
 ):
     
     """
@@ -50,10 +50,10 @@ def main(
     seed : int, optional
         The seed, by default 2. if -1, use random seed.
     """
-
+    init = time.time()
     stream = StreamDiffusionWrapper(
         model_id_or_path=model_id_or_path,
-        lora_dict=lora_dict,
+        lora_dict=lora_dict,    
         t_index_list=[0, 16, 32, 45],
         frame_buffer_size=1,
         width=width,
@@ -66,14 +66,16 @@ def main(
         seed=seed,
     )
 
+    stre = time.time()
     stream.prepare(
         prompt=prompt,
+        negative_prompt="blurry",
         num_inference_steps=50,
     )
-
     for _ in range(stream.batch_size - 1):
         stream()
-
+    curr = time.time()
+    print(f"total time: {curr- init} seconds, stream time: {curr-stre}")
     output_image = stream()
     output_image.save(output)
 

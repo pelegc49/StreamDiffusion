@@ -1,5 +1,5 @@
 import os
-import sys
+import sys, time
 from typing import Literal, Dict, Optional
 
 import fire
@@ -25,7 +25,7 @@ def main(
     use_denoising_batch: bool = True,
     guidance_scale: float = 1.2,
     cfg_type: Literal["none", "full", "self", "initialize"] = "self",
-    seed: int = 2,
+    seed: int = -1,
     delta: float = 0.5,
 ):
     """
@@ -67,10 +67,9 @@ def main(
         The delta multiplier of virtual residual noise,
         by default 1.0.
     """
-
+    init = time.time()
     if guidance_scale <= 1.0:
         cfg_type = "none"
-
     stream = StreamDiffusionWrapper(
         model_id_or_path=model_id_or_path,
         lora_dict=lora_dict,
@@ -86,6 +85,7 @@ def main(
         seed=seed,
     )
 
+    stre = time.time()
     stream.prepare(
         prompt=prompt,
         negative_prompt=negative_prompt,
@@ -95,10 +95,10 @@ def main(
     )
 
     image_tensor = stream.preprocess_image(input)
-
     for _ in range(stream.batch_size - 1):
         stream(image=image_tensor)
-
+    curr = time.time()
+    print(f"total time: {curr- init} seconds, stream time: {curr-stre}")
     output_image = stream(image=image_tensor)
     output_image.save(output)
 

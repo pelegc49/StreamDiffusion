@@ -153,9 +153,7 @@ class App:
         if not os.path.exists("public"):
             os.makedirs("public")
 
-        self.app.mount(
-            "/", StaticFiles(directory="./frontend/public", html=True), name="public"
-        )
+        self.app.mount("/", StaticFiles(directory=os.path.join(os.path.dirname(__file__), "frontend", "public"), html=True), name="public")
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

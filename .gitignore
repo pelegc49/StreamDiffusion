@@ -4,15 +4,15 @@
 engines/
 output/
 *.csv
-*.mp4
+# *.mp4
 *.safetensors
 result_lcm.png
 model.ckpt
-*.png
+# *.png
 !assets/img2img_example.png
 !assets/cfg_conparision.png
 !images/inputs/input.png
-
+*.py.txt
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -40,7 +40,9 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
-
+models/Model/FLUX.1-dev
+models/Model/pastel-mix
+models/Model/kohaku-v2.1
 # PyInstaller
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.

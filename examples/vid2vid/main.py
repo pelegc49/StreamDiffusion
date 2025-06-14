@@ -1,7 +1,9 @@
-import os
+import av  # Add this import at the top with other imports
+import os,time
 import sys
 from typing import Literal, Dict, Optional
-
+from fractions import Fraction
+import numpy as np
 import fire
 import torch
 from torchvision.io import read_video, write_video
@@ -56,7 +58,7 @@ def main(
     seed : int, optional
         The seed, by default 2. if -1, use random seed.
     """
-
+    init = time.time()
     video_info = read_video(input)
     video = video_info[0] / 255
     fps = video_info[2]["video_fps"]
@@ -76,11 +78,12 @@ def main(
         mode="img2img",
         output_type="pt",
         enable_similar_image_filter=enable_similar_image_filter,
-        similar_image_filter_threshold=0.98,
+        similar_image_filter_threshold=0.9,
         use_denoising_batch=use_denoising_batch,
         seed=seed,
+        cfg_type="initialize"
     )
-
+    stre = time.time()
     stream.prepare(
         prompt=prompt,
         num_inference_steps=50,
@@ -95,9 +98,31 @@ def main(
         output_image = stream(video[i].permute(2, 0, 1))
         video_result[i] = output_image.permute(1, 2, 0)
 
-    video_result = video_result * 255
-    write_video(output, video_result[2:], fps=fps)
+    # video_result = video_result * 255
+    # write_video(output, video_result[2:], fps=fps)
 
+    # Convert video to proper format
+    video_result = (video_result * 255).to(torch.uint8)
+    video_result = video_result.cpu().numpy()[2:]  # Convert to numpy and skip first 2 frames
+
+    # Write video using av
+    container = av.open(output, mode='w')
+    stream = container.add_stream('h264', rate=int(fps))
+    stream.width = width
+    stream.height = height
+    stream.pix_fmt = 'yuv420p'
+
+    for frame_data in video_result:
+        frame = av.VideoFrame.from_ndarray(frame_data, format='rgb24')
+        packet = stream.encode(frame)
+        container.mux(packet)
+
+    # Flush encoder
+    packet = stream.encode(None)
+    container.mux(packet)
+    container.close()
+    curr = time.time()
+    print(f"total time: {curr- init} seconds, stream time: {curr-stre}")
 
 if __name__ == "__main__":
     fire.Fire(main)

@@ -1,7 +1,7 @@
 import os
 import sys
 from typing import Literal, Dict, Optional
-
+import time
 import fire
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -20,7 +20,7 @@ def main(
     height: int = 512,
     frame_buffer_size: int = 3,
     acceleration: Literal["none", "xformers", "tensorrt"] = "xformers",
-    seed: int = 2,
+    seed: int = int(time.time()),
 ):
     
     """
@@ -62,20 +62,20 @@ def main(
         warmup=10,
         acceleration=acceleration,
         mode="txt2img",
-        use_denoising_batch=False,
+        use_denoising_batch=True,
         cfg_type="none",
-        seed=seed,
+        seed=-1,
     )
 
     stream.prepare(
         prompt=prompt,
         num_inference_steps=50,
     )
-
+    init = time.time()
     output_images = stream()
     for i, output_image in enumerate(output_images):
         output_image.save(os.path.join(output, f"{i:02}.png"))
-
+    print("total time is",time.time()-init, "seconds")
 
 if __name__ == "__main__":
     fire.Fire(main)

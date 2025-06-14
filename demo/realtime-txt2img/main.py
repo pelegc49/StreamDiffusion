@@ -71,6 +71,8 @@ class Api:
             t_index_list=config.t_index_list,
             warmup=config.warmup,
             use_safety_checker=config.use_safety_checker,
+            width=512,
+            height=512,
             cfg_type="none",
         )
         self.app = FastAPI()
@@ -87,7 +89,10 @@ class Api:
             allow_methods=["*"],
             allow_headers=["*"],
         )
-        self.app.mount("/", StaticFiles(directory="./frontend/dist", html=True), name="public")
+
+        # Use an absolute path for the frontend dist directory
+        dist_directory = Path(__file__).parent / "frontend" / "dist"
+        self.app.mount("/", StaticFiles(directory=dist_directory, html=True), name="public")
 
         self._predict_lock = asyncio.Lock()
         self._update_prompt_lock = asyncio.Lock()
